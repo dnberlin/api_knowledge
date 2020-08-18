@@ -1,10 +1,17 @@
 import requests
 import json
+import urllib.parse
+
+URL = ""
 
 def main():
-    data = get_request()
-    formatted_output = json.dumps(data, sort_keys=True, indent=4)
-    print(formatted_output)
+    get_request_endpoint()    
+    #data = get_request()
+    # Format well
+    #formatted_output = json.dumps(data, sort_keys=True, indent=4)
+    #print(formatted_output)
+    # Write to file
+    #write_file(data)
 
 def get_request():
     # Make a GET request
@@ -19,12 +26,38 @@ def get_request():
     r = requests.get(url = URL, params = PARAMS)
 
     # Extract data in json format
-    data = r.json()
+    data = json.loads(r.text)
+    # data = r.json()
 
     return data
     
+def get_request_endpoint():
+    # https://www.geeksforgeeks.org/get-post-requests-using-python/
+    data = load_file("out.json")
+    for element in data["results"][0]["address_components"]:
+        API_ENDPOINT = F"https://xyz.com/volunteer/{element['long_name']}/badge/{element['short_name']}"
+        print(API_ENDPOINT)
+        #r=requests.get(API_ENDPOINT)
+        #print(r.text)
+    
 def post_request():
     pass
+
+def load_file(filename="in.json"):
+    # Load json-data from file
+    with open(filename, 'r') as text_file_input:
+        data = text_file_input.read()
+    # Load content as json object
+    json_obj = json.loads(data)
+    return json_obj
+
+def write_file(data, filename="out.json"):
+    # Write json-data to file
+    with open(filename, 'w') as test_file_output:
+        json.dump(data, test_file_output, sort_keys=True, indent=4)
+        
+def parse_json(json_obj):
+    
 
 '''# Get-request - Get data
 resp = requests.get('https://example.com/tasks/')
