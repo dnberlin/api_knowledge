@@ -2,33 +2,53 @@ import requests
 import json
 import urllib.parse
 
-URL = ""
+URL = "https://owner-api.teslamotors.com"
+ACCESS_TOKEN = ""
 
 def main():
-    get_request_endpoint()    
-    #data = get_request()
-    # Format well
-    #formatted_output = json.dumps(data, sort_keys=True, indent=4)
-    #print(formatted_output)
-    # Write to file
-    #write_file(data)
-
-def get_request():
-    # Make a GET request
-    URL = "https://maps.googleapis.com/maps/api/geocode/json"
-    API_KEY = "AIzaSyCS2Gjgnz64Eayf5MASyFOBEqIw6VWUaGA"
+    # Get OAuth2 token
+    PAYLOAD = {'password': '',
+    'email': '',
+    'client_secret': '',
+    'client_id': '',
+    'grant_type': 'password'}
+    HEADERS = {'content-type': 'application/json'}
+    data = post_request("/oauth/token", HEADERS, PAYLOAD)
+    print_json(data)
+    write_file(data, filename="oauth2.json")
+    ACCESS_TOKEN = data["access_token"]
     
-    # location given here 
-    location = "TU Berlin, Straße des 17 Juni, Berlin"
-
-    PARAMS = {'address':location, 'key': API_KEY}
-
-    r = requests.get(url = URL, params = PARAMS)
-
-    # Extract data in json format
-    data = json.loads(r.text)
-    # data = r.json()
-
+    # Make diagostic call
+    HEADERS = {'content-type': 'application/json',
+    'authorization': ACCESS_TOKEN}
+    data = request_get('/api/1/diagnostics', HEADERS)
+    print_json(data)
+    
+    # Vehicle ID
+    HEADERS = {'content-type': 'application/json',
+    'authorization': ACCESS_TOKEN}
+    data = request_get('/api/1/vehicles', HEADERS)
+    print_json(data)
+    VEHICLE_ID = data["response"][0]["id"]
+    
+    #
+    HEADERS = {'content-type': 'application/json',
+    'authorization': ACCESS_TOKEN}
+    request_url = '/api/1/vehicles/' + VEHICLE_ID
+    data = request_get(request_url, HEADERS)
+    print_json(data)
+    
+def get_request(location, header, parameter = {}):
+    request_url = URL + location
+    r = requests.get(url = request_url, params = parameter, headers=header)
+    print(debug_request_content(r))
+    if (r.status_code == requests.codes.ok):   
+        print(debug_answer_content(r)) 
+        # Extract data in json format
+        data = json.loads(r.text)
+        # data = r.json()
+    else:
+        r.raise_for_status()
     return data
     
 def get_request_endpoint():
@@ -40,9 +60,19 @@ def get_request_endpoint():
         #r=requests.get(API_ENDPOINT)
         #print(r.text)
     
-def post_request():
-    pass
-
+def post_request(location, header, data = {}):
+    request_url = URL + location
+    r = requests.post(url = request_url, data = data, headers=header)
+    print(debug_request_content(r))
+    if (r.status_code == requests.codes.ok):   
+        print(debug_answer_content(r)) 
+        # Extract data in json format
+        data = json.loads(r.text)
+        # data = r.json()
+    else:
+        r.raise_for_status()
+    return data
+    
 def load_file(filename="in.json"):
     # Load json-data from file
     with open(filename, 'r') as text_file_input:
@@ -55,23 +85,27 @@ def write_file(data, filename="out.json"):
     # Write json-data to file
     with open(filename, 'w') as test_file_output:
         json.dump(data, test_file_output, sort_keys=True, indent=4)
-        
-def parse_json(json_obj):
-    
+        print(F"File {filename} written")
 
-'''# Get-request - Get data
-resp = requests.get('https://example.com/tasks/')
-if resp.status_code != 200:
-	raise ApiError(F'GET /tasks/ {resp.status_code}')
-for todo_item in resp.json():
-	print(F"{todo_item['id']} {todo_item['summary']}")
+def print_json(data):
+    print(json.dumps(data, sort_keys=True, indent=4))
 
-# POST-request - Provide data
-task = {"summary": "Take out trash", "description": "..."}
-resp = requests.post("https://example.com/tasks/", json=task)
-if resp.status_code != 201:
-	raise ApiError(F'POST /task/ {resp.status_code}')
-print(F'Created task. ID :{resp.json()["id"]}')
-'''
+def debug_request_content(r):
+    return F"""
+Quering the following request:
+Request: {r.url}
+Encoding: {r.encoding}
+Status code: {r.status_code}
+"""
+
+def debug_answer_content(r):
+    headers = ""
+    for key,value in r.headers.items():
+        headers += F"{key}: {value} \n"
+    return F"""
+Headers:
+{headers}
+"""
+
 if __name__ == "__main__":
     main()
