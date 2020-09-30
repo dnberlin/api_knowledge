@@ -1,0 +1,84 @@
+{
+    "results": [
+        {
+            "address_components": [
+                {
+                    "long_name": "Stra\u00dfe des 17. Juni 135",
+                    "short_name": "Stra\u00dfe des 17. Juni 135",
+                    "types": [
+                        "route"
+                    ]
+                },
+                {
+                    "long_name": "Bezirk Charlottenburg-Wilmersdorf",
+                    "short_name": "Bezirk Charlottenburg-Wilmersdorf",
+                    "types": [
+                        "political",
+                        "sublocality",
+                        "sublocality_level_1"
+                    ]
+                },
+                {
+                    "long_name": "Berlin",
+                    "short_name": "Berlin",
+                    "types": [
+                        "locality",
+                        "political"
+                    ]
+                },
+                {
+                    "long_name": "Berlin",
+                    "short_name": "Berlin",
+                    "types": [
+                        "administrative_area_level_1",
+                        "political"
+                    ]
+                },
+                {
+                    "long_name": "Germany",
+                    "short_name": "DE",
+                    "types": [
+                        "country",
+                        "political"
+                    ]
+                },
+                {
+                    "long_name": "10623",
+                    "short_name": "10623",
+                    "types": [
+                        "postal_code"
+                    ]
+                }
+            ],
+            "formatted_address": "Stra\u00dfe des 17. Juni 135, 10623 Berlin, Germany",
+            "geometry": {
+                "location": {
+                    "lat": 52.5125322,
+                    "lng": 13.3269446
+                },
+                "location_type": "GEOMETRIC_CENTER",
+                "viewport": {
+                    "northeast": {
+                        "lat": 52.5138811802915,
+                        "lng": 13.3282935802915
+                    },
+                    "southwest": {
+                        "lat": 52.5111832197085,
+                        "lng": 13.3255956197085
+                    }
+                }
+            },
+            "place_id": "ChIJcQqAORtRqEcRgY1oNi3sCrQ",
+            "plus_code": {
+                "compound_code": "G87G+2Q Berlin, Germany",
+                "global_code": "9F4MG87G+2Q"
+            },
+            "types": [
+                "establishment",
+                "point_of_interest",
+                "university"
+            ]
+        }
+    ],
+    "status": "OK"
+}
