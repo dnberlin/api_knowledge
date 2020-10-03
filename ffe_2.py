@@ -26,18 +26,38 @@ test_definitions = {
     "dependent_connections": ["conn33", "conn51", "conn6", "conn9", "conn10", "..."]},
     "...": {"..."}
 }
-failed_tests = ["test7, test3", "test1", "..."]
+# There is a " missing between test7 and test3. Maybe you want to correct the exam.
+failed_tests = ["test7", "test3", "test1", "..."]
+traversed_tests = []
 
 def main():
-    # Set to keep track of visited nodes.
-    # Driver Code
-    for test in test_definitions:
+    # This is a tree problem, traverse to discover the path for each failed test
+    for failed_test in failed_tests:
         visited = set()
-        dfs(visited, test_definitions, test)
+        dfs(visited, test_definitions, failed_test)
+    # Sort the data
+    sorted_test = sort()
+    # Print results
+    print(sorted_test)
+
+def sort():
+    # Count the occourency of each test for each path
+    sorted_test = {}
+    for test in traversed_tests:
+        if test not in sorted_test:
+            sorted_test[test] = 1
+        else:
+            sorted_test[test] = sorted_test[test] + 1
+    # Sort by most occurency        
+    return {k: v for k, v in sorted(sorted_test.items(), key=lambda item: item[1], reverse = True)}
 
 def dfs(visited, graph, node):
+    # For production mode
+    #  if node not in visited:
+    # For test purposes
     if node not in visited and node != "...":
         print (F"Node is {node}")
+        traversed_tests.append(node)
         visited.add(node)
         for neighbour in graph[node]["parentTests"]:
             dfs(visited, graph, neighbour)
