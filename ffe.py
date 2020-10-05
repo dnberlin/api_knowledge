@@ -30,7 +30,7 @@ def main():
             if character == obi['url']:
                 print(F" [*] Obi was part of: {film['title']}")
                 obi_films.append(film["url"])
-    # (3) Find all movies Obi was in
+    # (3) Find people that played together with Obi and sort them by occurrence
     print("Solution (4):")
     obi_friends = {}
     for film in obi_films:
