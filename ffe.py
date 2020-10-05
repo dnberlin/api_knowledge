@@ -5,24 +5,24 @@ URL = ""
 HEADERS = {'content-type': 'application/json'}
 
 def main():
-    # (1) Find Obi and extract name and gender
+    # (1) Find person and extract name and gender
     print("Solution (1):")
     person = find_person("Obi-Wan Kenobi")
     print(F" [*] Person found: {person['name']} is {person['gender']}.")
 
-    # (2) Find residence on Obi's hometown
+    # (2) Find residents on hometown
     print("Solution (2):")
     residents = find_residents_on_homeworld(person["homeworld"])
     for resident in residents:
         print(F" [*] {resident['name']} is living on {person['name']}'s homeworld")
 
-    # (3) Find all movies Obi was in
+    # (3) Find all movies person was in
     print("Solution (3):")
     person_films = find_films_of_person(person['name'])
     for film in person_films:
         print(F" [*] {person['name']} was part of: {film['title']}")
 
-    # (4) Find people that played together with Obi and sort them by occurrence
+    # (4) Find people that played together with person and sort them by occurrence
     print("Solution (4):")
     obi_friends = {}
     for film in person_films:
