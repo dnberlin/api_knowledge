@@ -6,7 +6,11 @@ HEADERS = {'content-type': 'application/json'}
 
 def main():
     my_favorite_person = "Obi-Wan Kenobi"
+    inquire_person(my_favorite_person)
 
+def inquire_person(my_favorite_person):
+    """Answers a bunch of question regarding a person"""
+    
     # (1) Find person and extract name and gender
     print("Solution (1):")
     person = find_person(my_favorite_person)
@@ -26,26 +30,16 @@ def main():
 
     # (4) Find people that played together with person and sort them by occurrence
     print("Solution (4):")
-    obi_friends = {}
-    for film in person_films:
-        for character in film["characters"]:
-            if character == person['url']:
-                continue;
-            elif character not in obi_friends.keys():
-                obi_friends[character] = 1
-            else:
-                obi_friends[character] = obi_friends[character] + 1
-    for key, value in {k: v for k, v in sorted(obi_friends.items(), key=lambda item: item[1], reverse = True)}.items():
-        print(F" [*] {get_name_gender(key)[0]} played {value} times together with Obi")
+    friends = find_best_friends_of_person(my_favorite_person)
+    for name, occurrence in friends.items():
+        print(F" [*] {get_name(name)} played {occurrence} times together with {my_favorite_person}")
 
 def find_person(name):
     """Find person"""
     data = get_request("https://swapi.dev/api/people/", HEADERS)
     for person in data["results"]:
         if person["name"] == name:
-            #print(F"Found {person['name']}.")
             return person
-    #print(F"{name} not found.")
     return None
 
 def find_residents_on_homeworld_of_person(name):
@@ -70,13 +64,23 @@ def find_films_of_person(name):
     return films
 
 def find_best_friends_of_person(name):
-    pass
+    """Find people that played together with person and order by occurence"""
+    person = find_person(name)
+    films = find_films_of_person(name)
+    friends = {}
+    for film in films:
+        for character_url_endpoint in film["characters"]:
+            if character_url_endpoint == person['url']:
+                continue
+            elif character_url_endpoint not in friends.keys():
+                friends[character_url_endpoint] = 1
+            else:
+                friends[character_url_endpoint] = friends[character_url_endpoint] + 1
+    return {k: v for k, v in sorted(friends.items(), key=lambda item: item[1], reverse = True)}
 
-
-def get_name_gender(url_endpoint):
+def get_name(url_endpoint):
     data = get_request(url_endpoint, HEADERS)
-    return [data["name"], data["gender"]]
-
+    return data["name"]
 
 """ API call helper functions:
 ------------------------------"""
