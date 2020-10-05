@@ -5,22 +5,24 @@ URL = ""
 HEADERS = {'content-type': 'application/json'}
 
 def main():
+    my_favorite_person = "Obi-Wan Kenobi"
+
     # (1) Find person and extract name and gender
     print("Solution (1):")
-    person = find_person("Obi-Wan Kenobi")
+    person = find_person(my_favorite_person)
     print(F" [*] Person found: {person['name']} is {person['gender']}.")
 
     # (2) Find residents on hometown
     print("Solution (2):")
-    residents = find_residents_on_homeworld(person["homeworld"])
+    residents = find_residents_on_homeworld_of_person(my_favorite_person)
     for resident in residents:
-        print(F" [*] {resident['name']} is living on {person['name']}'s homeworld")
+        print(F" [*] {resident['name']} is living on {my_favorite_person}'s homeworld")
 
     # (3) Find all movies person was in
     print("Solution (3):")
-    person_films = find_films_of_person(person['name'])
+    person_films = find_films_of_person(my_favorite_person)
     for film in person_films:
-        print(F" [*] {person['name']} was part of: {film['title']}")
+        print(F" [*] {my_favorite_person} was part of: {film['title']}")
 
     # (4) Find people that played together with person and sort them by occurrence
     print("Solution (4):")
@@ -37,15 +39,18 @@ def main():
         print(F" [*] {get_name_gender(key)[0]} played {value} times together with Obi")
 
 def find_person(name):
+    """Find person"""
     data = get_request("https://swapi.dev/api/people/", HEADERS)
     for person in data["results"]:
         if person["name"] == name:
-            print(F"Found {person['name']}.")
+            #print(F"Found {person['name']}.")
             return person
-    print(F"{name} not found.")
+    #print(F"{name} not found.")
     return None
 
-def find_residents_on_homeworld(homeworld_url_endpoint):
+def find_residents_on_homeworld_of_person(name):
+    """Find residents on a homeworld"""
+    homeworld_url_endpoint = find_person(name)['homeworld']
     residents = []
     data = get_request(homeworld_url_endpoint, HEADERS)
     for person_url_endpoint in data["residents"]:
@@ -53,16 +58,19 @@ def find_residents_on_homeworld(homeworld_url_endpoint):
         residents.append(data)
     return residents
 
-def find_films_of_person(person):
-    person = find_person(person)
+def find_films_of_person(name):
+    """Find films of a person"""
+    person = find_person(name)
     films = []
     data = get_request("https://swapi.dev/api/films/", HEADERS)
     for film in data["results"]:
-        for worker_url_endpoint in film["characters"]:
-            if worker_url_endpoint == person['url']:
+        for person_url_endpoint in film["characters"]:
+            if person_url_endpoint == person['url']:
                 films.append(film)
     return films
 
+def find_best_friends_of_person(name):
+    pass
 
 
 def get_name_gender(url_endpoint):
