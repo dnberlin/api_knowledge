@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import concurrent.futures
 import requests
 import json
@@ -9,9 +11,8 @@ HEADERS = {'content-type': 'application/json'}
 def main():
     """Performance measurement
         non-concurrent version: 188s, 165s, 153s
-            excluding result requests (get_person_name, get_film_title): 31s, 25s, 25s
-        IO - Bound problem use threading
-        optimizatized version performance: 15s, 11s, 16s
+        IO - Bound problem: use threading
+        optimizatized version performance: 30s, 35s, 24s
     """
     start_time = time.time()
 
@@ -23,7 +24,7 @@ def main():
 
 def inquire_person(my_favorite_person):
     """Answers a bunch of question regarding a person"""
-
+    
     # (1) Find person and extract name and gender
     print("Solution (1):")
     person = find_person(my_favorite_person)
@@ -31,25 +32,23 @@ def inquire_person(my_favorite_person):
 
     # (2) Find residents on hometown
     print("Solution (2):")
-    resident_url_endpoints = find_residents_on_homeworld_of_person(my_favorite_person)
+    resident_urls = find_residents_on_homeworld_of_person(my_favorite_person)
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
-        for resident_name in executor.map(get_person_name, resident_url_endpoints):
+        for resident_name in executor.map(get_person_name, resident_urls):
             print(F" [*] {resident_name} is living on {my_favorite_person}'s homeworld")
 
     # (3) Find all movies person was in
     print("Solution (3):")
-    film_url_endpoints = find_films_of_person(my_favorite_person)
+    film_urls = find_films_of_person(my_favorite_person)
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
-        for film_title in executor.map(get_film_title, film_url_endpoints):
+        for film_title in executor.map(get_film_title, film_urls):
             print(F" [*] {my_favorite_person} was part of: {film_title}")
-
+    
     # (4) Find people that played together with person and sort them by occurrence
     print("Solution (4):")
     friends = find_best_friends_of_person(my_favorite_person)
-    friends.keys()
-    for person_url_endpoint, occurrence in friends.items():
-        print(F" [*] {person_url_endpoint} played {occurrence} times together with {my_favorite_person}")
-    #    print(F" [*] {get_person_name(person_url_endpoint)} played {occurrence} times together with {my_favorite_person}")
+    for name, occurrence in friends.items():
+        print(F" [*] {name} played {occurrence} time(s) together with {my_favorite_person}")
 
 def find_person(name):
     """Find person
@@ -63,56 +62,61 @@ def find_person(name):
 def find_residents_on_homeworld_of_person(name):
     """Find residents on a homeworld
     2 apicalls in sequence"""
-    homeworld_url_endpoint = find_person(name)['homeworld']
-    resident_url_endpoints = []
-    data = get_request(homeworld_url_endpoint, HEADERS)
-    for person_url_endpoint in data["residents"]:
-        resident_url_endpoints.append(person_url_endpoint)
-    return resident_url_endpoints
+    homeworld_url = find_person(name)['homeworld']
+    resident_urls = []
+    data = get_request(homeworld_url, HEADERS)
+    for person_url in data["residents"]:
+        resident_urls.append(person_url)
+    return resident_urls
 
 def find_films_of_person(name):
     """Find films of a person
     1 apicall in sequence"""
     person = find_person(name)
-    film_url_endpoints = []
-    for film_url_endpoint in person['films']:
-        film_url_endpoints.append(film_url_endpoint)
-    return film_url_endpoints
+    film_urls = []
+    for film_url in person['films']:
+        film_urls.append(film_url)
+    return film_urls
 
 def find_best_friends_of_person(name):
     """Find people that played together with person and order by occurence
-    2 apicalls in sequence, others all concurrent"""
-    person = find_person(name)
-    film_url_endpoints = find_films_of_person(name)
+    1 apicalls in sequence, others all concurrent"""
+    film_urls = find_films_of_person(name)
     friends = {}
-    for character_url_endpoints in get_film_characters_for_films(film_url_endpoints):
-        for character_url_endpoint in character_url_endpoints:
-            if character_url_endpoint == person['url']:
-                continue
-            elif character_url_endpoint not in friends.keys():
-                friends[character_url_endpoint] = 1
-            else:
-                friends[character_url_endpoint] = friends[character_url_endpoint] + 1
+    # Collect all people url that played together with person
+    all_character_urls = list(get_film_characters_for_films(film_urls))
+    all_character_urls_flat = [item for sublist in all_character_urls for item in sublist]
+    # Translate url's into there names
+    all_character_names = get_names_of_people(all_character_urls_flat)
+    # Count ocurrence
+    for character_name in all_character_names:
+        if character_name == name:
+            continue
+        elif character_name not in friends.keys():
+            friends[character_name] = 1
+        else:
+            friends[character_name] = friends[character_name] + 1
+    # Sort by highest occurence
     return {k: v for k, v in sorted(friends.items(), key=lambda item: item[1], reverse = True)}
 
-def get_film_characters_for_films(film_url_endpoints):
+def get_film_characters_for_films(film_urls):
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        return executor.map(get_film_characters, film_url_endpoints)
+        return executor.map(get_film_characters, film_urls)
 
-def get_names_of_people(person_url_endpoints_batch):
+def get_names_of_people(person_urls):
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        return executor.map(get_person_name, person_url_endpoints_batch)
+        return executor.map(get_person_name, person_urls)
     
-def get_person_name(person_url_endpoint):
-    data = get_request(person_url_endpoint, HEADERS)
+def get_person_name(person_url):
+    data = get_request(person_url, HEADERS)
     return data["name"]
 
-def get_film_title(film_url_endpoint):
-    data = get_request(film_url_endpoint, HEADERS)
+def get_film_title(film_url):
+    data = get_request(film_url, HEADERS)
     return data["title"]
 
-def get_film_characters(film_url_endpoint):
-    data = get_request(film_url_endpoint, HEADERS)
+def get_film_characters(film_url):
+    data = get_request(film_url, HEADERS)
     return data['characters']
 
 """ API call helper functions:
