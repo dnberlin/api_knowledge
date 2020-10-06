@@ -11,6 +11,7 @@ def main():
         non-concurrent version: 188s, 165s, 153s
             excluding result requests (get_person_name, get_film_title): 31s, 25s, 25s
         IO - Bound problem use threading
+        optimizatized version performance: 15s, 11s, 16s
     """
     start_time = time.time()
 
@@ -45,15 +46,14 @@ def inquire_person(my_favorite_person):
     # (4) Find people that played together with person and sort them by occurrence
     print("Solution (4):")
     friends = find_best_friends_of_person(my_favorite_person)
-    #with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
-    #    for person_name in executor.map(get_film_title, friends.keys()):
-    #        print(F" [*] {person_name} played {occurrence} times together with {my_favorite_person}") 
+    friends.keys()
     for person_url_endpoint, occurrence in friends.items():
-    #    print(F" [*] {get_person_name(person_url_endpoint)} played {occurrence} times together with {my_favorite_person}")
         print(F" [*] {person_url_endpoint} played {occurrence} times together with {my_favorite_person}")
+    #    print(F" [*] {get_person_name(person_url_endpoint)} played {occurrence} times together with {my_favorite_person}")
 
 def find_person(name):
-    """Find person"""
+    """Find person
+    1 apicall in sequence"""
     data = get_request("https://swapi.dev/api/people/", HEADERS)
     for person in data["results"]:
         if person["name"] == name:
@@ -61,7 +61,8 @@ def find_person(name):
     return None
 
 def find_residents_on_homeworld_of_person(name):
-    """Find residents on a homeworld"""
+    """Find residents on a homeworld
+    2 apicalls in sequence"""
     homeworld_url_endpoint = find_person(name)['homeworld']
     resident_url_endpoints = []
     data = get_request(homeworld_url_endpoint, HEADERS)
@@ -70,7 +71,8 @@ def find_residents_on_homeworld_of_person(name):
     return resident_url_endpoints
 
 def find_films_of_person(name):
-    """Find films of a person"""
+    """Find films of a person
+    1 apicall in sequence"""
     person = find_person(name)
     film_url_endpoints = []
     for film_url_endpoint in person['films']:
@@ -78,12 +80,12 @@ def find_films_of_person(name):
     return film_url_endpoints
 
 def find_best_friends_of_person(name):
-    """Find people that played together with person and order by occurence"""
+    """Find people that played together with person and order by occurence
+    2 apicalls in sequence, others all concurrent"""
     person = find_person(name)
     film_url_endpoints = find_films_of_person(name)
     friends = {}
-    for film_url_endpoint in film_url_endpoints:
-        character_url_endpoints = get_film_characters(film_url_endpoint)
+    for character_url_endpoints in get_film_characters_for_films(film_url_endpoints):
         for character_url_endpoint in character_url_endpoints:
             if character_url_endpoint == person['url']:
                 continue
@@ -93,6 +95,14 @@ def find_best_friends_of_person(name):
                 friends[character_url_endpoint] = friends[character_url_endpoint] + 1
     return {k: v for k, v in sorted(friends.items(), key=lambda item: item[1], reverse = True)}
 
+def get_film_characters_for_films(film_url_endpoints):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        return executor.map(get_film_characters, film_url_endpoints)
+
+def get_names_of_people(person_url_endpoints_batch):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        return executor.map(get_person_name, person_url_endpoints_batch)
+    
 def get_person_name(person_url_endpoint):
     data = get_request(person_url_endpoint, HEADERS)
     return data["name"]
