@@ -1,6 +1,4 @@
-from collections import defaultdict
-import json
-import pprint
+#!/usr/bin/env python3
 
 test_definitions = {
     "test1": {
@@ -28,8 +26,13 @@ test_definitions = {
 }
 # There is a " missing between test7 and test3. Maybe you want to correct the exam.
 failed_tests = ["test7", "test3", "test1", "..."]
-traversed_tests = []
+
+# Tests
+traversed_failed_tests = []
 unique_tests = set()
+
+# Connections
+#  Lists all found connections while traversing
 all_connections = []
 unique_connections = set()
 connection_count = {}
@@ -38,24 +41,41 @@ def main():
     
     # (1)
     print("Solution (1):")
-    # This is a tree problem, traverse to discover the path for each failed test
-    for failed_test in failed_tests:
-        visited = set()
-        dfs(visited, test_definitions, failed_test)
-    # Sort the data
-    sorted_test = sort()
-    # Print results
-    for test, occurence in sorted_test.items():
-        print(F"{occurence} test's are dependent on {test}")
+    solution_1()
     
     # (2)
     print("Solution (2):")
+    solution_2()
+
+def solution_1():
+    # Traverse to discover the path for each failed test
+    for failed_test in failed_tests:
+        visited_failed = set()
+        dfs_failed(visited_failed, test_definitions, failed_test)
+    # Sort the data
+    sorted_test = sort_by_dependence()
+    # Print results
+    for test, occurence in sorted_test.items():
+        print(F"[*] {occurence} test's are dependent on {test}")
+
+def sort_by_dependence():
+    # Count the occourency of each test for each path
+    sorted_test = {}
+    for test in traversed_failed_tests:
+        if test not in sorted_test:
+            sorted_test[test] = 1
+        else:
+            sorted_test[test] = sorted_test[test] + 1
+    # Sort by most occurency        
+    return {k: v for k, v in sorted(sorted_test.items(), key=lambda item: item[1], reverse = True)}
+
+def solution_2():
     # Get all connection
     for test in test_definitions:
-        visited = set()
-        dfs(visited, test_definitions, test)
+        visited_all = set()
+        dfs_all(visited_all, test_definitions, test)
     # Flatten list
-    all_connections_flat = [item for sublist in all_connections for item in sublist]
+    all_connections_flat = flatten_list(all_connections)
     # Clean list and skip dublicants
     for connection in all_connections_flat:
         if connection == '...':
@@ -66,19 +86,18 @@ def main():
     for connection in unique_connections:
         connection_count[connection] = 0
     # Find passed tests
-    traversed_tests = []
     for passed_test in test_definitions:
         if passed_test in failed_tests:
             continue
         else:
-            visited = set()
-            dfs_2(visited, test_definitions, passed_test)
+            visited_passed = set()
+            dfs_passed(visited_passed, test_definitions, passed_test)
     # Find connection of passed tests
     passed_connections = []
     for unique_passed_test in unique_tests:
         passed_connections.append(test_definitions[unique_passed_test]['dependent_connections'])
     # Flatten list
-    passed_connections_flat = [item for sublist in passed_connections for item in sublist]
+    passed_connections_flat = flatten_list(passed_connections)
     # Feed result set with connection that were passed
     for connection in passed_connections_flat:
         if connection in connection_count.keys():
@@ -87,42 +106,36 @@ def main():
     sorted_connections = {k: v for k, v in sorted(connection_count.items(), key=lambda item: item[1])}
     # Print results
     for connection, times_passed in sorted_connections.items():
-        print(F"{connection} was successfully passed by {times_passed} test(s)")
-    
-def sort():
-    # Count the occourency of each test for each path
-    sorted_test = {}
-    for test in traversed_tests:
-        if test not in sorted_test:
-            sorted_test[test] = 1
-        else:
-            sorted_test[test] = sorted_test[test] + 1
-    # Sort by most occurency        
-    return {k: v for k, v in sorted(sorted_test.items(), key=lambda item: item[1], reverse = True)}
+        print(F"[*] {connection} was successfully passed by {times_passed} test(s)")
 
-def dfs(visited, graph, node):
-    # For production mode
-    #  if node not in visited:
-    # For test purposes
+"""Traversal helper functions"""
+
+def dfs_all(visited, graph, node):
     if node not in visited and node != "...":
-        #print (F"Node is {node}")
-        traversed_tests.append(node)
         all_connections.append(graph[node]['dependent_connections'])
         visited.add(node)
         for neighbour in graph[node]["parentTests"]:
-            dfs(visited, graph, neighbour)
+            dfs_all(visited, graph, neighbour)
 
-def dfs_2(visited, graph, node):
-    # For production mode
-    #  if node not in visited:
-    # For test purposes
+def dfs_failed(visited, graph, node):
+    if node not in visited and node != "...":
+        #print (F"Node is {node}")
+        traversed_failed_tests.append(node)
+        visited.add(node)
+        for neighbour in graph[node]["parentTests"]:
+            dfs_failed(visited, graph, neighbour)
+
+def dfs_passed(visited, graph, node):
     if node not in visited and node != "...":
         #print (F"Node is {node}")
         unique_tests.add(node)
         visited.add(node)
         for neighbour in graph[node]["parentTests"]:
-            dfs_2(visited, graph, neighbour)
+            dfs_passed(visited, graph, neighbour)
 
+"""Other helper functions"""
+def flatten_list(nested_list):
+    return [item for sublist in nested_list for item in sublist]
 
 if __name__ == '__main__':
     main()
