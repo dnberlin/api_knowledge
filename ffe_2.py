@@ -56,7 +56,7 @@ def solution_1():
     sorted_test = sort_by_dependence()
     # Print results
     for test, occurence in sorted_test.items():
-        print(F"[*] {occurence} test's are dependent on {test}")
+        print(F" [*] {occurence} test's are dependent on {test}")
 
 def sort_by_dependence():
     # Count the occourency of each test for each path
@@ -106,7 +106,7 @@ def solution_2():
     sorted_connections = {k: v for k, v in sorted(connection_count.items(), key=lambda item: item[1])}
     # Print results
     for connection, times_passed in sorted_connections.items():
-        print(F"[*] {connection} was successfully passed by {times_passed} test(s)")
+        print(F" [*] {connection} was successfully passed by {times_passed} test(s)")
 
 """Traversal helper functions"""
 
