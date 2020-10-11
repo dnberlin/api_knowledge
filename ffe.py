@@ -9,6 +9,9 @@ URL = ""
 HEADERS = {'content-type': 'application/json'}
 
 def main():
+    # For prototyping disable HTTPS certificate warnings
+    requests.packages.urllib3.disable_warnings()
+
     """Performance measurement
         non-concurrent version: 188s, 165s, 153s
         IO - Bound problem: use threading
@@ -124,7 +127,7 @@ def get_film_characters(film_url):
 
 def get_request(location, header, parameter = {}):
     request_url = URL + location
-    r = requests.get(url=request_url, params=parameter, headers=header)
+    r = requests.get(url=request_url, params=parameter, headers=header, verify=False)
     #print(debug_request_content(r))
     if (r.status_code == requests.codes.ok):   
         #print(debug_answer_content(r)) 
